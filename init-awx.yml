@@ -1,0 +1,103 @@
+---
+- name: Install python3
+  hosts: all
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python2"
+  tasks:
+    - ansible.builtin.yum:
+        name:
+          - "python3-3.7.9"
+          - "python3-devel-3.7.9"
+        state: present
+        lock_timeout: 120
+      become: yes
+
+- name: Init Instances
+  hosts: all
+  tasks:
+    - name: Config hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+      become: yes
+
+    - name: Set timezone to Asia/Tokyo
+      community.general.timezone:
+        name: "Asia/Tokyo"
+      become: yes
+
+    - name: Install docker
+      ansible.builtin.yum:
+        name: "docker-19.03.13ce-1.amzn2"
+        state: present
+        lock_timeout: 120
+      become: yes
+      vars:
+        ansible_python_interpreter: "/usr/bin/env python2"
+
+    - name: Start docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+        use: service
+      become: yes
+
+    - name: "Add {{ ansible_user }} into Docker group"
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups:
+          - docker
+      become: yes
+
+    - name: Reboot Instance
+      reboot:
+        reboot_timeout: 120
+      become: yes
+
+    - name: Update pip by pip3
+      ansible.builtin.pip:
+        name:
+          - pip
+        state: latest
+        executable: pip3
+      become: yes
+      when: "inventory_hostname != 'awxdb'"
+
+    - name: Install docker python modules
+      ansible.builtin.pip:
+        name:
+          - docker
+          - docker-compose
+        state: latest
+
+    - name: Install docker-Compose
+      ansible.builtin.shell: "curl -L https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-`uname -s`-`uname -m` -o {{ docker_compose_dir }} && chmod +x {{ docker_compose_dir }}"
+      args:
+        executable: /bin/bash
+      become: yes
+
+    - block:
+      - name: Make work dir
+        ansible.builtin.file:
+          path: "/home/ec2-user/awx-db"
+          state: directory
+
+      - name: Run db container
+        community.docker.docker_container:
+          name: "awx-postgres"
+          image: "postgres:12"
+          hostname: "awx-postgres"
+          state: started
+          container_default_behavior: compatibility
+          network_mode: default
+          restart_policy: "always"
+          env:
+            TZ: "Asia/Tokyo"
+            POSTGRES_PASSWORD: awxpass
+            POSTGRES_DB: awx
+            POSTGRES_USER: awx
+          ports:
+            - "5432:5432"
+          volumes:
+            - "/home/ec2-user/awx-db:/var/lib/postgresql/data"
+      when: "inventory_hostname == 'awxdb'"

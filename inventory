@@ -1,0 +1,5 @@
+[awx]
+#awxdb ansible_host=
+awx1 ansible_host=
+awx2 ansible_host=
+awx3 ansible_host=

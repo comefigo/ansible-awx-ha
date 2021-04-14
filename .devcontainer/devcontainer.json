@@ -1,0 +1,11 @@
+{
+	"name": "Ansible HA",
+	"dockerFile": "Dockerfile",
+	"context": "..",
+	"extensions": [
+		"vscoss.vscode-ansible",
+		"ms-python.python",
+		"samuelcolvin.jinjahtml"
+	],
+	"shutdownAction": "stopContainer"
+}
