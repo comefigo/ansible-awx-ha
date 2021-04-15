@@ -2,7 +2,7 @@
     "files.eol": "\n",
     "files.trimTrailingWhitespace": true,
     "files.associations": {
-        "*_hosts": "ssh_config"
+        "*inventory": "ssh_config"
     },
     "editor.trimAutoWhitespace": true,
     "editor.autoIndent": "full",

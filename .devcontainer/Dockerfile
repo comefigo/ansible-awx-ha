@@ -6,9 +6,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends
 # install libs
 RUN apt-get install -y vim git
 
-# Copy default endpoint specific user settings overrides into container to specify Python path
-COPY .devcontainer/settings.vscode.json /root/.vscode-remote/data/Machine/settings.json
-
 # upgrade pip
 RUN pip install --upgrade pip
 
